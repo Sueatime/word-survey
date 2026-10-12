@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Survey Says</title>
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--h:260;--bg:hsl(var(--h) 30% 9%);--panel:hsl(var(--h) 26% 15%);--ink:hsl(var(--h) 60% 95%);--mute:hsl(var(--h) 20% 68%);--pur:hsl(var(--h) 70% 68%);--key:hsl(var(--h) 14% 30%);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:520px;padding:24px 16px 32px;text-align:center}
+h1{margin:0 0 6px;font-size:28px}
+.sub{margin:0 auto 22px;max-width:420px;line-height:1.4;color:var(--mute);font-size:15px}
+.top{display:flex;justify-content:space-between;font-weight:700;margin:0 4px 16px}
+.q{background:var(--panel);border:2px solid var(--pur);border-radius:12px;padding:16px;font-size:20px;font-weight:600;margin:0 0 14px}
+.row{display:flex;justify-content:space-between;align-items:center;background:hsl(var(--h) 95% 66%);color:hsl(var(--h) 60% 10%);border-radius:8px;padding:12px 14px;margin:8px 0;font-weight:700;font-size:18px;text-align:left}
+.row .n{width:28px;opacity:.7}.row .a{flex:1;text-transform:capitalize}
+.row.hid{background:var(--key);color:var(--mute)}
+.row.hid .a{text-transform:none;letter-spacing:4px;font-weight:400}.row.hid .a:after{content:"\00b7 \00b7 \00b7 \00b7 \00b7"}
+.in{display:flex;gap:10px;margin-top:16px}
+input{flex:1;min-width:0;font:inherit;font-size:17px;padding:10px 14px;border-radius:8px;border:2px solid var(--mute);background:transparent;color:var(--ink)}
+input:focus{outline:none;border-color:var(--pur)}
+button{font:inherit;font-weight:600;padding:10px 18px;border-radius:8px;border:0;background:var(--pur);color:#1a1033;cursor:pointer}
+button.alt{background:transparent;color:var(--ink);border:2px solid var(--mute)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+button:disabled,input:disabled{opacity:.4;cursor:not-allowed}
+.msg{min-height:26px;font-weight:600;margin:14px 0 0}
+.in.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.end{margin-top:18px;display:flex;gap:10px;justify-content:center}
+.row.miss{background:hsl(var(--h) 25% 38%);color:var(--ink)}
+.row.hid.hinted{color:var(--ink)}
+.row.hid.hinted .a{letter-spacing:3px;font-weight:600}
+.row.hid.hinted .a:after{content:none}
+.row.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{0%{transform:scale(.7) rotateX(90deg);opacity:0}100%{transform:none;opacity:1}}
+</style></head><body><main>
+<h1>Survey Says</h1>
+<p class="sub">Guess the most popular survey answers. Find them all to clear the board.</p>
+<div class="top" hidden><span id="sc"></span></div>
+<div class="q" id="q"></div>
+<div id="board"></div>
+
+<div class="msg" id="msg"></div>
+<div class="in"><input id="g" placeholder="Type your answer…" autocomplete="off"><button id="go">Guess</button></div>
+<div class="end"><button class="alt" id="next">Next question</button><button class="alt" id="hint">Hint</button><button class="alt" id="give">Give up</button></div>
+</main>
+<script>
+const Q=[
+["Name something you take to the beach", [["sunscreen", 30, ["sun cream", "sunblock", "lotion"]], ["towel", 20, ["towels"]], ["sunglasses", 14, ["shades"]], ["hat", 10, ["cap"]], ["umbrella", 9, ["parasol"]], ["swimsuit", 9, ["swimwear", "bikini", "bathing suit"]], ["water", 8, ["drink", "drinks", "bottle"]]]],
+["Name a popular food at a Malaysian breakfast", [["nasi lemak", 35, ["nasi"]], ["roti canai", 22, ["roti", "canai"]], ["teh tarik", 12, ["tea", "teh"]], ["toast", 8, ["bread", "kaya toast"]], ["egg", 7, ["eggs", "half boiled egg"]], ["mee goreng", 6, ["fried noodles", "mee"]], ["kuih", 5, ["kueh", "cakes"]], ["coffee", 5, ["kopi"]]]],
+["Name something people forget when leaving the house", [["phone", 33, ["handphone", "mobile"]], ["keys", 27, ["key"]], ["wallet", 18, ["purse"]], ["mask", 8, ["face mask"]], ["umbrella", 7, []], ["charger", 7, ["power bank"]]]],
+["Name a reason people are late for work", [["traffic", 40, ["jam", "traffic jam"]], ["overslept", 22, ["sleep", "woke up late", "alarm"]], ["rain", 12, ["weather"]], ["car trouble", 9, ["car", "breakdown"]], ["kids", 6, ["children"]], ["missed bus", 6, ["bus", "train", "public transport"]], ["forgot something", 5, ["forgot"]]]],
+["Name a fruit you can find at a night market", [["durian", 28, []], ["mango", 20, ["mangoes"]], ["watermelon", 16, ["melon"]], ["rambutan", 14, []], ["banana", 12, ["bananas"]], ["pineapple", 10, ["nanas"]]]],
+["Name something you do on a rainy day", [["sleep", 28, ["nap"]], ["watch tv", 22, ["movie", "movies", "netflix", "tv"]], ["drink tea", 12, ["coffee", "hot drink", "tea", "drink coffee"]], ["read", 10, ["book", "reading"]], ["play games", 9, ["game", "games"]], ["eat", 8, ["snack", "snacks", "food", "cook"]], ["stay home", 6, ["home", "stay in"]], ["listen to music", 5, ["music"]]]],
+["Name a popular Malaysian street food", [["satay", 28, ["sate"]], ["char kuey teow", 22, ["ckt", "kuey teow", "char koay teow"]], ["nasi lemak", 15, ["nasi"]], ["cendol", 12, []], ["apam balik", 10, ["apam"]], ["goreng pisang", 7, ["fried banana", "pisang goreng"]], ["rojak", 6, []]]],
+["Name something you find in a school bag", [["books", 34, ["book", "textbook", "textbooks"]], ["pencil case", 20, ["pencil", "pencils", "pen", "pens", "stationery"]], ["water bottle", 15, ["bottle", "water"]], ["lunch box", 12, ["lunch", "food", "snack"]], ["ruler", 10, []], ["calculator", 9, []]]],
+["Name a popular hobby", [["reading", 20, ["read", "books"]], ["gaming", 18, ["games", "play games", "video games"]], ["cooking", 14, ["cook"]], ["football", 12, ["soccer"]], ["travelling", 11, ["travel", "traveling"]], ["cycling", 10, ["biking", "bike"]], ["badminton", 8, []], ["photography", 7, ["photos"]]]],
+["Name something people do on a holiday", [["travel", 25, ["go abroad", "trip"]], ["sleep", 20, ["rest", "sleep in"]], ["visit family", 15, ["family", "balik kampung"]], ["shop", 12, ["shopping"]], ["eat", 11, ["food", "makan"]], ["swim", 9, ["beach"]], ["watch movies", 8, ["movie", "tv", "netflix"]]]],
+["Name a popular pet", [["cat", 40, ["kitten", "cats"]], ["dog", 36, ["puppy", "dogs"]], ["fish", 12, ["goldfish"]], ["bird", 8, ["parrot", "birds"]], ["rabbit", 4, ["bunny"]]]],
+["Name something you find in a kitchen", [["fridge", 24, ["refrigerator"]], ["stove", 18, ["cooker", "hob"]], ["knife", 14, ["knives"]], ["pot", 12, ["pots", "pan", "pans"]], ["plate", 10, ["plates", "dishes"]], ["rice cooker", 9, []], ["spoon", 7, ["spoons"]], ["sink", 6, []]]],
+["Name something you wear on your feet", [["shoes", 32, ["sneakers", "trainers", "footwear"]], ["slippers", 22, ["flip flops", "selipar"]], ["socks", 20, ["stockings"]], ["sandals", 14, []], ["boots", 12, ["boot"]]]],
+["Name a drink people order at a cafe", [["coffee", 30, ["kopi", "latte", "cappuccino", "espresso", "americano"]], ["tea", 22, ["teh", "milk tea", "teh tarik"]], ["juice", 14, ["orange juice", "fruit juice"]], ["milo", 12, ["chocolate", "hot chocolate"]], ["soda", 10, ["soft drink", "coke", "fizzy drink", "cola"]], ["water", 7, ["mineral water"]], ["smoothie", 5, []]]],
+["Name something you find in a bathroom", [["toilet", 22, ["wc", "loo", "commode"]], ["shower", 18, ["showerhead"]], ["soap", 16, ["bodywash", "body wash"]], ["toothbrush", 12, ["toothpaste"]], ["towel", 12, []], ["mirror", 10, []], ["sink", 10, ["basin"]]]],
+["Name a type of vehicle", [["car", 35, ["automobile", "vehicle"]], ["motorcycle", 25, ["motorbike", "bike", "scooter", "motor"]], ["bus", 15, ["coach"]], ["bicycle", 10, ["cycle"]], ["train", 8, ["lrt", "mrt", "monorail"]], ["truck", 7, ["lorry"]]]],
+["Name a popular job", [["teacher", 22, ["lecturer", "tutor", "educator"]], ["doctor", 20, ["physician", "surgeon"]], ["engineer", 14, []], ["police", 12, ["policeman", "police officer", "cop"]], ["driver", 10, ["chauffeur", "grab driver"]], ["chef", 8, ["cook"]], ["nurse", 7, []], ["farmer", 7, ["planter"]]]],
+["Name a Malaysian festival or celebration", [["hari raya", 30, ["eid", "raya", "aidilfitri"]], ["chinese new year", 28, ["cny", "lunar new year", "spring festival"]], ["deepavali", 18, ["diwali", "festival of lights"]], ["merdeka", 10, ["independence day", "national day"]], ["christmas", 8, ["xmas"]], ["gawai", 6, ["kaamatan", "harvest festival"]]]],
+["Name a subject taught in school", [["math", 25, ["maths", "mathematics", "add maths"]], ["english", 20, ["bahasa inggeris"]], ["science", 18, ["physics", "chemistry", "biology"]], ["bahasa malaysia", 15, ["malay", "bm", "bahasa"]], ["history", 10, ["sejarah"]], ["art", 7, ["drawing", "pendidikan seni"]], ["pe", 5, ["sports", "physical education", "sport"]]]],
+["Name something people do before bed", [["brush teeth", 30, ["brushing teeth", "toothbrush", "brush my teeth"]], ["check phone", 22, ["phone", "scroll", "social media", "use phone"]], ["shower", 14, ["bath", "wash", "take a bath"]], ["pray", 12, ["prayer", "solat", "sembahyang"]], ["read", 10, ["book", "reading"]], ["turn off lights", 7, ["lights", "switch off light"]], ["set alarm", 5, ["alarm"]]]],
+["Name an animal you see at the zoo", [["elephant", 22, []], ["lion", 20, ["lions"]], ["tiger", 18, ["harimau"]], ["monkey", 14, ["ape", "orangutan", "chimpanzee"]], ["giraffe", 10, []], ["zebra", 8, []], ["bear", 8, ["panda", "polar bear"]]]],
+["Name a popular sport", [["football", 30, ["soccer", "bola"]], ["badminton", 24, ["shuttlecock"]], ["basketball", 12, []], ["swimming", 10, ["swim"]], ["tennis", 8, []], ["running", 8, ["jogging", "run", "athletics"]], ["cycling", 8, ["biking"]]]],
+["Name a fast food restaurant", [["mcdonalds", 32, ["mcd", "mcdonald", "macd"]], ["kfc", 28, ["kentucky", "fried chicken"]], ["burger king", 12, ["bk"]], ["pizza hut", 10, ["pizza"]], ["subway", 8, ["sub"]], ["dominos", 6, ["domino"]], ["texas chicken", 4, ["texas"]]]],
+["Name something you put in your coffee", [["sugar", 40, ["sweetener", "gula"]], ["milk", 30, ["creamer", "cream", "susu"]], ["ice", 12, []], ["condensed milk", 10, ["susu pekat"]], ["cinnamon", 8, []]]],
+["Name a color", [["red", 20, ["merah"]], ["blue", 18, ["biru"]], ["green", 16, ["hijau"]], ["yellow", 14, ["kuning"]], ["black", 12, ["hitam"]], ["white", 10, ["putih"]], ["pink", 10, ["merah jambu"]]]],
+["Name a Malaysian dessert", [["cendol", 28, ["chendol"]], ["ais kacang", 22, ["ice kacang", "abc", "shaved ice"]], ["kuih", 16, ["kueh", "kuih muih"]], ["pulut hitam", 12, ["black glutinous rice"]], ["bubur cha cha", 10, ["cha cha"]], ["durian pancake", 8, ["pancake"]], ["ice cream", 4, ["aiskrim"]]]],
+["Name something people do at a wedding", [["eat", 30, ["makan", "feast", "buffet"]], ["take photos", 20, ["photos", "photo", "photography", "selfie"]], ["dance", 15, ["dancing"]], ["give angpao", 12, ["angpow", "red packet", "money gift", "gift", "present"]], ["sing", 10, ["karaoke"]], ["cry", 8, ["weep"]], ["dress up", 5, ["wear nice clothes"]]]],
+["Name something that is round", [["ball", 30, ["football", "basketball"]], ["moon", 18, ["full moon"]], ["wheel", 14, ["tyre", "tire"]], ["plate", 12, ["dish"]], ["coin", 10, ["money"]], ["clock", 8, ["watch"]], ["orange", 8, []]]],
+["Name something you do at the gym", [["lift weights", 30, ["weights", "weightlifting", "weight training", "dumbbells", "lifting"]], ["run", 22, ["treadmill", "running", "jog", "cardio"]], ["stretch", 14, ["stretching", "yoga"]], ["squat", 12, ["squats", "legs"]], ["push ups", 10, ["pushup", "pushups", "press ups"]], ["plank", 7, ["planks"]], ["cycle", 5, ["bike", "cycling"]]]],
+["Name something people complain about", [["weather", 22, ["rain", "hot", "heat"]], ["traffic", 20, ["jam"]], ["price", 16, ["prices", "expensive", "cost of living", "inflation", "costs"]], ["boss", 12, ["work", "job", "manager"]], ["noise", 10, ["noisy neighbours", "neighbours"]], ["internet", 10, ["wifi", "slow wifi"]], ["food", 10, ["cold food"]]]],
+["Name a place people go to relax", [["beach", 28, ["sea", "seaside"]], ["home", 20, ["house", "bed", "room"]], ["park", 14, ["garden", "lake park"]], ["cafe", 12, ["coffee shop", "restaurant"]], ["spa", 10, ["massage"]], ["mall", 8, ["shopping mall", "shopping"]], ["cinema", 8, ["movies", "theatre"]]]],
+["Name something you charge", [["phone", 45, ["handphone", "mobile", "smartphone"]], ["laptop", 20, ["computer", "notebook"]], ["power bank", 12, ["powerbank"]], ["earphones", 8, ["earbuds", "headphones", "airpods"]], ["watch", 8, ["smartwatch"]], ["car", 7, ["ev", "electric car"]]]],
+["Name something that comes in pairs", [["shoes", 25, ["footwear", "sandals", "slippers"]], ["socks", 20, []], ["gloves", 14, ["glove"]], ["eyes", 12, ["eye"]], ["earrings", 10, ["earring"]], ["chopsticks", 10, ["chopstick"]], ["hands", 9, ["hand", "arms"]]]],
+["Name something that is sweet", [["sugar", 25, ["gula"]], ["chocolate", 20, []], ["cake", 15, ["cakes", "dessert"]], ["candy", 12, ["sweets", "sweet", "lollipop"]], ["honey", 10, ["madu"]], ["ice cream", 10, []], ["fruit", 8, ["mango", "strawberry", "durian"]]]],
+["Name something sold at a night market", [["food", 25, ["snacks", "street food", "satay"]], ["clothes", 20, ["shirt", "clothing", "t shirts"]], ["fruits", 14, ["fruit", "durian"]], ["toys", 12, ["toy"]], ["accessories", 10, ["jewellery", "jewelry", "bracelet", "handbags"]], ["phone cases", 9, ["casing", "phone accessories"]], ["drinks", 10, ["juice", "sugarcane", "tea"]]]],
+["Name something that is cold", [["ice", 36, ["ice cube", "ice cubes"]], ["ice cream", 20, ["aiskrim", "ais krim"]], ["fridge", 14, ["refrigerator", "freezer"]], ["winter", 12, ["snow"]], ["air cond", 10, ["aircon", "air conditioner", "ac"]], ["drinks", 8, ["cold drink", "soda"]]]],
+["Name a type of weather", [["rain", 35, ["raining", "rainy", "storm", "thunderstorm", "thunder", "monsoon"]], ["sunny", 25, ["sun", "sunshine", "hot", "clear"]], ["cloudy", 15, ["clouds", "overcast"]], ["windy", 10, ["wind"]], ["foggy", 8, ["fog", "haze", "mist"]], ["snow", 7, ["snowy", "snowing", "blizzard"]]]],
+["Name something people do on their phone", [["social media", 28, ["facebook", "instagram", "tiktok", "scroll", "scrolling"]], ["chat", 20, ["whatsapp", "message", "text", "messaging", "telegram"]], ["watch videos", 16, ["youtube", "video", "videos", "netflix", "streaming"]], ["play games", 14, ["game", "games", "gaming"]], ["call", 10, ["phone call", "calling", "phone", "talk"]], ["take photos", 7, ["photos", "photo", "camera", "selfie"]], ["listen to music", 5, ["music", "spotify"]]]],
+["Name a type of shop in a shopping mall", [["clothes", 25, ["fashion", "clothing", "uniqlo", "apparel"]], ["food", 20, ["restaurant", "food court", "restaurants", "eatery"]], ["cinema", 14, ["movies", "gsc", "tgv", "movie theatre"]], ["supermarket", 12, ["grocery", "groceries", "jaya grocer", "aeon"]], ["phone", 10, ["electronics", "gadgets", "mobile shop"]], ["shoes", 10, ["footwear", "shoe shop"]], ["books", 9, ["bookstore", "popular", "mph", "book shop"]]]],
+["Name something you do when you are bored", [["sleep", 25, ["nap"]], ["scroll phone", 22, ["phone", "scroll", "social media", "tiktok", "use phone"]], ["watch tv", 18, ["tv", "movie", "netflix", "youtube", "watch videos"]], ["eat", 15, ["snack", "snacks", "food", "makan"]], ["play games", 12, ["game", "games", "gaming"]], ["walk", 8, ["walk around", "go out", "exercise", "jalan jalan"]]]],
+["Name something you find in a classroom", [["whiteboard", 22, ["board", "blackboard", "chalkboard"]], ["desk", 20, ["table", "tables", "desks"]], ["chair", 18, ["chairs"]], ["teacher", 14, []], ["books", 10, ["book"]], ["fan", 8, ["ceiling fan", "fans", "aircond"]], ["projector", 8, ["screen"]]]],
+["Name something you eat with rice", [["chicken", 28, ["fried chicken", "ayam"]], ["egg", 20, ["eggs", "telur"]], ["fish", 16, ["ikan", "fried fish"]], ["vegetables", 12, ["veggies", "vegetable", "sayur", "greens"]], ["sambal", 12, ["chilli", "chili", "spicy sauce"]], ["curry", 8, ["gravy", "kari"]], ["tofu", 4, ["tempeh", "tauhu"]]]],
+["Name a birthday gift", [["cake", 30, ["birthday cake"]], ["money", 18, ["cash", "angpao", "voucher"]], ["flowers", 14, ["bouquet", "flower"]], ["toy", 12, ["toys", "doll", "lego"]], ["clothes", 10, ["shirt", "dress"]], ["book", 9, ["books"]], ["watch", 7, ["watches", "jewelry", "jewellery"]]]],
+["Name a reason to take a day off work", [["sick", 35, ["ill", "fever", "unwell", "flu", "cold", "mc", "medical leave"]], ["travel", 18, ["holiday", "vacation", "trip"]], ["family", 15, ["family matter", "family emergency", "wedding", "funeral"]], ["rest", 12, ["tired", "burnout", "relax", "mental health"]], ["appointment", 10, ["doctor", "dentist"]], ["errands", 10, ["personal matters", "errand", "bank"]]]],
+["Name a popular snack", [["chips", 28, ["crisps", "keropok", "potato chips"]], ["chocolate", 18, ["choc"]], ["biscuits", 14, ["biscuit", "cookies", "cookie", "crackers"]], ["nuts", 12, ["peanuts", "kacang", "nut"]], ["popcorn", 10, []], ["fruit", 10, ["fruits"]], ["candy", 8, ["sweets", "gummy"]]]],
+["Name something you keep in your wallet", [["money", 30, ["cash", "notes", "ringgit", "coins"]], ["ic", 20, ["id", "identity card", "mykad", "identification"]], ["cards", 18, ["credit card", "debit card", "card", "bank card", "atm card"]], ["license", 10, ["driving license", "licence", "lesen"]], ["receipts", 8, ["receipt", "bills"]], ["photo", 7, ["photos", "picture"]], ["touch n go", 7, ["tng", "tng card"]]]],
+["Name something you do first thing in the morning", [["brush teeth", 28, ["brushing teeth", "toothbrush", "brush my teeth"]], ["check phone", 22, ["phone", "scroll", "social media"]], ["drink water", 14, ["water", "drink", "drink coffee", "coffee", "tea"]], ["shower", 12, ["bath", "wash", "take a bath"]], ["pray", 10, ["prayer", "subuh", "solat"]], ["eat breakfast", 8, ["breakfast", "eat", "makan"]], ["stretch", 6, ["yawn", "exercise", "wake up"]]]],
+["Name something you can fly", [["kite", 30, ["layang layang"]], ["airplane", 25, ["plane", "aeroplane", "aircraft", "jet", "flight"]], ["drone", 18, ["uav"]], ["balloon", 10, ["hot air balloon", "balloons"]], ["helicopter", 9, ["chopper"]], ["flag", 8, ["flags", "banner"]]]],
+["Name a famous place in Malaysia", [["petronas towers", 28, ["klcc", "twin towers", "petronas", "kl tower"]], ["langkawi", 18, []], ["penang", 14, ["georgetown", "george town"]], ["genting", 12, ["genting highlands"]], ["melaka", 10, ["malacca"]], ["batu caves", 10, ["batu cave"]], ["cameron highlands", 8, ["cameron"]]]],
+["Name a popular noodle dish", [["mee goreng", 25, ["fried noodles", "mee", "mamak noodles"]], ["laksa", 20, ["curry laksa", "assam laksa", "asam laksa"]], ["char kuey teow", 18, ["ckt", "kuey teow"]], ["wantan mee", 14, ["wanton mee", "wan tan mee", "wonton noodles"]], ["maggi", 12, ["instant noodles", "maggie", "maggi goreng", "mi segera"]], ["curry mee", 11, ["curry noodles"]]]]];
+let r=-1,score=0,found=[],over=false,deck=[],hue=-1,hints={};const HUES=[0,20,35,45,95,125,150,205,225,245,260,280,300,320,340];
+const $=i=>document.getElementById(i);
+const norm=s=>s.toLowerCase().replace(/[^a-z ]/g,"").trim();
+function lev(a,b){const m=[];for(let i=0;i<=a.length;i++){m[i]=[i];}for(let j=1;j<=b.length;j++)m[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return m[a.length][b.length]}
+function same(v,t){t=norm(t);if(!t)return false;const ts=t.replace(/s$/,"");return [v,v.replace(/s$/,"")].some(x=>x===t||x===ts||(x.length>3&&(t.includes(x)||(t.length>3&&x.includes(t))))||(x.length>4&&t.length>4&&lev(x,t)<=1))}
+function load(){if(!deck.length)deck=Q.map((_,i)=>i).sort(()=>Math.random()-.5);r=deck.pop();let h;do{h=HUES[Math.random()*HUES.length|0]}while(h===hue);hue=h;document.documentElement.style.setProperty("--h",h);over=false;found=[];hints={};
+$("sc").textContent="Score: "+score;$("q").textContent=Q[r][0];$("msg").textContent="Find all "+Q[r][1].length+" answers. Guess as many times as you like.";
+$("g").disabled=false;$("go").disabled=false;$("give").disabled=false;$("hint").disabled=false;draw();$("g").focus()}
+function draw(reveal,anim){const[,ans]=Q[r];let k=0;$("board").innerHTML=ans.map((a,i)=>{const f=found.includes(i),s=f||reveal,m=reveal&&!f;
+const cls=(s?"":"hid ")+(!s&&hints[i]?"hinted ":"")+(m?"miss ":"")+((anim===i||m)?"pop":"");const d=m?`style="animation-delay:${(k++)*.18}s"`:"";
+return `<div class="row ${cls}" ${d}><span class="n">${i+1}</span><span class="a">${s?a[0]:(hints[i]||"")}</span><span class="p">${s?a[1]:""}</span></div>`}).join("")}
+function finish(win){over=true;$("g").disabled=true;$("go").disabled=true;draw(true);
+$("msg").textContent=win?"Board cleared! Nice one.":"Here are the answers.";
+$("sc").textContent="Score: "+score;$("give").disabled=true;$("hint").disabled=true;if(win)confetti()}
+function guess(){if(over)return;const v=norm($("g").value);$("g").value="";if(!v)return;const ans=Q[r][1];
+let hit=-1;ans.forEach((a,i)=>{if(hit<0&&[a[0],...a[2]].some(t=>same(v,t)))hit=i});
+if(hit>=0){if(found.includes(hit)){$("msg").textContent="Already on the board.";return}
+found.push(hit);score+=ans[hit][1];$("msg").textContent="Survey says… +"+ans[hit][1]+"!";$("sc").textContent="Score: "+score;draw(false,hit);ding();
+if(found.length===ans.length)finish(true)}
+else{$("msg").textContent="Not on the board. Try again!";buzz();shake()}}
+function confetti(){
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+const c=document.createElement("canvas");c.style.cssText="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10";c.width=innerWidth;c.height=innerHeight;document.body.append(c);
+const x=c.getContext("2d"),cols=[0,45,150,200,260,320].map(h=>`hsl(${h} 85% 55%)`);
+const ps=Array.from({length:150},()=>({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*.35,vx:(Math.random()-.5)*15,vy:-Math.random()*13-4,s:6+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.floor(Math.random()*cols.length)]}));
+let t=0;
+(function f(){
+x.clearRect(0,0,c.width,c.height);t++;
+ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
+if(t<160)requestAnimationFrame(f);else c.remove();
+})();
+}
+$("give").onclick=()=>{if(!over){finish(false);$("msg").textContent="You gave up. Here are the answers."}};
+let ac;
+function beep(f,at,d,type,v){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;const t=ac.currentTime+at;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d)}
+function buzz(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();beep(110,0,.55,"sawtooth",.25);beep(104,0,.55,"square",.1)}catch(e){}}
+function ding(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();beep(880,0,.3,"sine",.2);beep(1320,.12,.45,"sine",.2)}catch(e){}}
+function shake(){const e=document.querySelector(".in");e.classList.remove("shake");void e.offsetWidth;e.classList.add("shake")}
+$("hint").onclick=()=>{if(over)return;const ans=Q[r][1];const c=ans.map((a,i)=>i).filter(i=>!found.includes(i)&&!hints[i]);
+if(!c.length){$("msg").textContent="All remaining answers already have a hint.";return}
+const i=c[Math.random()*c.length|0],w=ans[i][0];hints[i]=w.split("").map((ch,j)=>ch===" "?"\u00a0\u00a0":(j===0?ch.toUpperCase():"_")).join(" ");
+$("msg").textContent="Hint: one answer starts with "+w[0].toUpperCase()+" and has "+w.replace(/ /g,"").length+" letters.";draw();$("g").focus()};
+$("go").onclick=guess;$("g").addEventListener("keydown",e=>{if(e.key==="Enter")guess()});
+$("next").onclick=load;
+load();
+</script></body></html>
